@@ -19,7 +19,7 @@ Single-purpose repo: one zsh prompt theme (`nick.zsh-theme` + `lib/async-git.zsh
 - `README.md`, `LICENSE` — prose, no logic.
 - `chore(ci): sync caller templates from seankoji-com/.github` PRs touching `.github/workflows/*.yml` — generated from the org's `.github` repo; fix upstream, not here.
 - Anything `spec/nick_spec.sh` already pins (porcelain-parsing cases, WezTerm gating, the warm-cache-must-not-fork-git case, palette selection) — a regression fails CI directly; don't restate a shellspec failure as a review comment.
-- A green CodeQL check on its own — its `language: actions` matrix (see the comment in `codeql.yml`) only scans `.github/workflows/*.yml`; there is no shell analyser, so it says nothing about `nick.zsh-theme` or `lib/async-git.zsh`.
+- A green CodeQL check on its own — its `language: actions` matrix (see the comment in `.github/workflows/codeql.yml`) only scans `.github/workflows/*.yml`; there is no shell analyser, so it says nothing about `nick.zsh-theme` or `lib/async-git.zsh`.
 
 ## Comment style
 
