@@ -226,4 +226,19 @@ Describe 'nick.zsh-theme'
       The stderr should equal ''
     End
   End
+  Describe 'all Git unmerged states'
+    Parameters
+      DD
+      AU
+      UD
+      UA
+      DU
+      AA
+    End
+    It "marks a $1 conflict even without a UU entry"
+      When call _nick_git_fields "$(print -l '#stash:0' '## main' "$1 conflicted.txt")"
+      The line 4 of output should equal '1'
+    End
+  End
+
 End
