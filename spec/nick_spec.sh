@@ -226,6 +226,56 @@ Describe 'nick.zsh-theme'
       The stderr should equal ''
     End
   End
+  Describe 'async Git callback routing'
+    Parameters
+      '[async/eval]'
+      '[async]'
+      'unrelated_job'
+    End
+    It "ignores $1 without replacing a cached Git result or repainting"
+      run_it() {
+        NICK_GIT_STATUS='cached-main'
+        NICK_GIT_STATUS_READY=1
+        zle() { print -u2 'unexpected repaint'; return 1; }
+        _nick_git_callback "$1" 0 '' 0 '' 0
+        print -r -- "$NICK_GIT_STATUS|$NICK_GIT_STATUS_READY"
+      }
+      When call run_it "$1"
+      The output should equal 'cached-main|1'
+      The stderr should equal ''
+    End
+  End
+
+  Describe 'async Git probe results'
+    It 'does not mark a cold cache ready on a directory-change reply'
+      run_it() {
+        NICK_GIT_STATUS=''
+        NICK_GIT_STATUS_READY=0
+        zle() { return 1; }
+        _nick_git_callback '[async/eval]' 0 '' 0 '' 0
+        print -r -- "[$NICK_GIT_STATUS]|$NICK_GIT_STATUS_READY"
+      }
+      When call run_it
+      The output should equal '[]|0'
+    End
+
+    Parameters
+      'new-main'
+      ''
+    End
+    It 'accepts a probe result, including an empty result outside a repository'
+      run_it() {
+        NICK_GIT_STATUS='cached-main'
+        NICK_GIT_STATUS_READY=0
+        zle() { return 1; }
+        _nick_git_callback '_nick_git_probe' 0 "$1" 0 '' 0
+        print -r -- "[$NICK_GIT_STATUS]|$NICK_GIT_STATUS_READY"
+      }
+      When call run_it "$1"
+      The output should equal "[$1]|1"
+    End
+  End
+
   Describe 'all Git unmerged states'
     Parameters
       DD

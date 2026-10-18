@@ -43,6 +43,9 @@ _nick_async_available() {
 }
 
 _nick_git_callback() {
+  # Worker eval replies and provider errors share this callback with probe jobs.
+  # Their stdout is not Git status and must not replace or validate the cache.
+  [[ "$1" == _nick_git_probe ]] || return 0
   # $3 is the job's stdout.
   NICK_GIT_STATUS="$3"
   NICK_GIT_STATUS_READY=1
