@@ -43,6 +43,15 @@ _nick_async_available() {
 }
 
 _nick_git_callback() {
+  if [[ "$1" == '[async]' && ( "$2" == 3 || "$2" == 130 ) ]]; then
+    # A missing/crashed worker cannot answer future jobs. Clean up its provider
+    # state, then let the next precmd restart it and register a fresh callback.
+    async_stop_worker nick_git
+    _nick_git_worker_started=0
+    NICK_GIT_STATUS=''
+    NICK_GIT_STATUS_READY=0
+    return 0
+  fi
   # Worker eval replies and provider errors share this callback with probe jobs.
   # Their stdout is not Git status and must not replace or validate the cache.
   [[ "$1" == _nick_git_probe ]] || return 0
@@ -55,9 +64,8 @@ _nick_git_callback() {
 }
 
 _nick_git_precmd() {
-  # Start the worker once, not on every prompt. async_start_worker forks, so
-  # calling it per precmd spawns a process per prompt to replace a process per
-  # prompt, which is not an improvement.
+  # Start once while healthy, retrying after worker loss. Starting per precmd
+  # would fork a replacement worker on every prompt and defeat the cache.
   if (( ! _nick_git_worker_started )); then
     async_start_worker nick_git -u -n || return
     async_register_callback nick_git _nick_git_callback
@@ -65,7 +73,7 @@ _nick_git_precmd() {
   fi
   # The worker keeps its own cwd, so point it at the current directory before
   # each job.
-  async_worker_eval nick_git builtin cd -q "$PWD"
+  async_worker_eval nick_git builtin cd -q "$PWD" || return
   async_job nick_git _nick_git_probe
 }
 
