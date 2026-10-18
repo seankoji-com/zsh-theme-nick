@@ -42,14 +42,21 @@ _nick_async_available() {
   autoload -Uz async 2>/dev/null && (( $+functions[async_start_worker] ))
 }
 
+_nick_git_worker_lost() {
+  if (( _nick_git_worker_started )); then
+    # A synchronous fatal callback may already have cleaned up the worker.
+    _nick_git_worker_started=0
+    async_stop_worker nick_git || :
+  fi
+  NICK_GIT_STATUS=''
+  NICK_GIT_STATUS_READY=0
+}
+
 _nick_git_callback() {
   if [[ "$1" == '[async]' && ( "$2" == 3 || "$2" == 130 ) ]]; then
-    # A missing/crashed worker cannot answer future jobs. Clean up its provider
-    # state, then let the next precmd restart it and register a fresh callback.
-    async_stop_worker nick_git
-    _nick_git_worker_started=0
-    NICK_GIT_STATUS=''
-    NICK_GIT_STATUS_READY=0
+    # The provider routes this callback by worker; [async] identifies its own
+    # control messages. Restart only on the next precmd, outside this callback.
+    _nick_git_worker_lost
     return 0
   fi
   # Worker eval replies and provider errors share this callback with probe jobs.
@@ -73,8 +80,16 @@ _nick_git_precmd() {
   fi
   # The worker keeps its own cwd, so point it at the current directory before
   # each job.
-  async_worker_eval nick_git builtin cd -q "$PWD" || return
-  async_job nick_git _nick_git_probe
+  async_worker_eval nick_git builtin cd -q "$PWD" || {
+    local result=$?
+    _nick_git_worker_lost
+    return $result
+  }
+  async_job nick_git _nick_git_probe || {
+    local result=$?
+    _nick_git_worker_lost
+    return $result
+  }
 }
 
 # Invalidate before a command runs. Otherwise the prompt drawn immediately
