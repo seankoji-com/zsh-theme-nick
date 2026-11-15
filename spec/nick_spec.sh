@@ -121,6 +121,18 @@ Describe 'nick.zsh-theme'
   End
 
   Describe 'prompt_git'
+    It 'renders percent escapes in branch names literally'
+      run_it() {
+        NICK_GIT_STATUS_READY=1
+        NICK_GIT_STATUS="$(print -l '#stash:0' '## feature%F{red}%%done' 'UU conflict')"
+        TERM=wezterm
+        local prompt=$(prompt_git)
+        print -r -- "${(%)prompt}"
+      }
+      When call run_it
+      The output should include 'feature%F{red}%%done'
+    End
+
     It 'renders nothing when the probe is empty and ready'
       run_it() {
         NICK_GIT_STATUS_READY=1
@@ -179,6 +191,48 @@ Describe 'nick.zsh-theme'
   End
 
   Describe 'prompt_dir'
+    Describe 'default worktree layouts'
+      Parameters
+        '.claude/worktrees'
+        '.worktrees'
+      End
+      It 'marks the checkout when the override is unset'
+        run_it() {
+          unset NICK_WORKTREE_MARKER
+          source ./nick.zsh-theme
+          TERM=wezterm
+          PWD="/home/u/repo/$1/feature"
+          prompt_dir
+        }
+        When call run_it "$1"
+        The output should include '58:5:44'
+      End
+    End
+
+    It 'uses a literal custom marker'
+      run_it() {
+        NICK_WORKTREE_MARKER='/custom/[literal]/'
+        source ./nick.zsh-theme
+        TERM=wezterm
+        PWD='/home/u/repo/custom/[literal]/feature'
+        prompt_dir
+      }
+      When call run_it
+      The output should include '58:5:44'
+    End
+
+    It 'replaces default markers with a custom marker'
+      run_it() {
+        NICK_WORKTREE_MARKER='/custom/'
+        source ./nick.zsh-theme
+        TERM=wezterm
+        PWD='/home/u/repo/.worktrees/feature'
+        prompt_dir
+      }
+      When call run_it
+      The output should not include '58:5:44'
+    End
+
     It 'marks a worktree checkout when the marker matches'
       run_it() {
         TERM=wezterm

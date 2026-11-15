@@ -133,8 +133,8 @@ prompt_git() {
 
   # A red curly underline on the branch name flags unmerged conflicts, which
   # are otherwise easy to lose among the status glyphs.
-  local branch_display=$branch
-  (( conflict )) && branch_display="$(_uc_start 196)${branch}$(_uc_end)"
+  local branch_display=${branch//\%/%%}
+  (( conflict )) && branch_display="$(_uc_start 196)${branch_display}$(_uc_end)"
 
   local display=" ${branch_display}"
   [[ -n "$details" ]] && display+=" ${details}"
@@ -181,7 +181,8 @@ prompt_dir() {
 
   # Dotted underline inside a git worktree checkout, so it is obvious which
   # checkout a shell is sitting in.
-  if [[ -n "$NICK_WORKTREE_MARKER" && "$PWD" == *"$NICK_WORKTREE_MARKER"* ]]; then
+  if { (( ${+NICK_WORKTREE_MARKER} )) && [[ -n "$NICK_WORKTREE_MARKER" && "$PWD" == *"$NICK_WORKTREE_MARKER"* ]]; } ||
+     { (( ! ${+NICK_WORKTREE_MARKER} )) && [[ "$PWD" == *'/.claude/worktrees/'* || "$PWD" == *'/.worktrees/'* ]]; }; then
     text="$(_uc_start 44 4)${text}$(_uc_end)"
   fi
 
@@ -207,10 +208,6 @@ build_prompt() {
   prompt_dir
   prompt_end
 }
-
-# Path fragment that marks a worktree checkout. Set to '' to disable the
-# dotted-underline directory hint.
-: ${NICK_WORKTREE_MARKER='/.claude/worktrees/'}
 
 RPROMPT=''
 PROMPT='%{%f%b%k%}$(build_prompt)

@@ -70,7 +70,7 @@ zstyle ':omz:alpha:lib:git' async-prompt no
 | Variable | Effect |
 |---|---|
 | `DEFAULT_USER` | Hides the `user@host` segment for this username |
-| `NICK_WORKTREE_MARKER` | Path fragment marking a worktree checkout, default `/.claude/worktrees/`. Set to `''` to disable |
+| `NICK_WORKTREE_MARKER` | Literal path fragment marking a worktree checkout. By default, `/.claude/worktrees/` and `/.worktrees/` are recognised. Set a custom fragment to replace both defaults, or `''` to disable |
 
 Inside a worktree the directory segment gets a dotted underline, so it is
 obvious which checkout a shell is sitting in. WezTerm only.
